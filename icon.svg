@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Rooster Project Madrigal">
+  <!-- Plaatshouder-icoon. Vervang dit later door het logo van Madrigal. -->
+  <rect width="512" height="512" rx="96" fill="#4b2e83"/>
+  <rect x="112" y="136" width="288" height="256" rx="28" fill="#ffffff"/>
+  <rect x="112" y="136" width="288" height="64" rx="28" fill="#ece6f6"/>
+  <rect x="112" y="172" width="288" height="28" fill="#ece6f6"/>
+  <rect x="168" y="104" width="28" height="72" rx="14" fill="#ffffff"/>
+  <rect x="316" y="104" width="28" height="72" rx="14" fill="#ffffff"/>
+  <path d="M190 300 l44 44 l92 -100" fill="none" stroke="#4b2e83" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
