@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rooster Project Madrigal</title>
+  <meta name="description" content="Duid aan wanneer je kan helpen in de bib van Project Madrigal.">
+  <meta name="theme-color" content="#4b2e83">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="sla-over" href="#inhoud">Naar de inhoud</a>
+
+  <header class="kop">
+    <div class="breed kop-binnen">
+      <!-- Plaatshouder: vervang icon.svg later door het logo van Madrigal. -->
+      <img src="icon.svg" alt="" width="40" height="40">
+      <p class="titel">Rooster <span>Project Madrigal</span></p>
+    </div>
+  </header>
+
+  <nav id="tabs" class="tabs" aria-label="Onderdelen" hidden></nav>
+
+  <main id="inhoud" class="breed" tabindex="-1">
+    <p>Even laden…</p>
+  </main>
+
+  <footer class="voet breed">
+    <button type="button" class="link" id="privacy-knop">Privacy</button>
+    <button type="button" class="link" id="code-wissen">Andere code ingeven</button>
+  </footer>
+
+  <noscript>
+    <p class="breed">Deze pagina heeft JavaScript nodig. Zet JavaScript aan in je browser, of vraag de coördinator om hulp.</p>
+  </noscript>
+
+  <script src="config.js"></script>
+  <script src="roosterregels.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
