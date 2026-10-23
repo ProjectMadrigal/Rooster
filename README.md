@@ -158,7 +158,7 @@ GitHub Pages zet de website gratis online.
 4. Kies bij **Branch** `main` en de map `/ (root)`. Klik op **Save**.
 5. Wacht een paar minuten en herlaad de pagina. Bovenaan verschijnt *"Your site is live at …"*, met de link naar de tool.
 
-Het adres is `https://projectmadrigal.github.io/` gevolgd door de naam van de repository. Wil je precies `projectmadrigal.github.io/rooster`, geef de repository dan de naam `rooster`, met kleine letters (**Settings → General → Repository name**).
+Het adres is `https://projectmadrigal.github.io/rooster/`: `projectmadrigal.github.io/` gevolgd door de naam van de repository. Hernoem je de repository (**Settings → General → Repository name**), dan verandert het adres mee en werkt de oude link niet meer.
 
 Na elke wijziging in de repository werkt GitHub de site vanzelf bij, meestal binnen een paar minuten.
 
@@ -279,7 +279,7 @@ Voor een volgende beheerder:
 
 | Wat | Waar |
 |---|---|
-| De website | Deze repository op GitHub, `ProjectMadrigal/Rooster`. Online via GitHub Pages (stap 5). |
+| De website | Deze repository op GitHub, [`ProjectMadrigal/rooster`](https://github.com/ProjectMadrigal/rooster). Online op [projectmadrigal.github.io/rooster](https://projectmadrigal.github.io/rooster/) via GitHub Pages (stap 5). |
 | De gegevens | De Google-spreadsheet **Rooster Project Madrigal** in het Google-account van Madrigal. |
 | De geschiedenis | De tabbladen **Kalender …** (per maand) en **Jaaroverzicht …** (per jaar) in die spreadsheet. |
 | Het script | In die spreadsheet: **Extensies → Apps Script**. Een kopie staat in [`apps-script/Code.gs`](apps-script/Code.gs). Hou die twee gelijk. |
