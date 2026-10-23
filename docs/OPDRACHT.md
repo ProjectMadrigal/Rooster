@@ -4,6 +4,8 @@ Dit is de oorspronkelijke opdracht waarmee deze tool gebouwd is. Ze staat hier z
 
 Onderaan staan de keuzes die bij de bouw nog gemaakt zijn, waar de opdracht niet duidelijk was.
 
+> **Later gewijzigd (oktober 2026).** De rol "coördinator" heet nu **planner** (instelling `code_planner`). De keuze "kan als het moet" is vervangen door **back-up**: wie dat kiest, komt die avond enkel op de plaats van back-up. De vraag "wil je ook back-up zijn?" is geschrapt. De tekst hieronder beschrijft de oorspronkelijke opdracht.
+
 ## Context
 
 Project Madrigal is een queer bibliotheek in Antwerpen, gedragen door vrijwilligers. De bib is elke vrijdagavond open van 18:00 tot 21:00. Per avond zijn er 2 vrijwilligers en 1 back-up nodig.
