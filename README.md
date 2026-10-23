@@ -38,6 +38,7 @@ Je hebt geen account nodig. Je browser onthoudt de code en je naam.
 - Met **Maak voorstel** stelt de tool het rooster samen. Per vrijdag staat erbij waarom die mensen gekozen zijn.
 - Je past aan waar nodig en kiest **Publiceer**. De spreadsheet krijgt dan ook een tabblad **Kalender** in de vertrouwde vorm: weken in rijen, maandag tot zondag in kolommen, met de rijen events, bib en backup.
 - Je ziet de afmeldingen, met een voorstel voor een vervanger.
+- In de spreadsheet staat per jaar een **jaaroverzicht**: hoeveel shiften elke vrijwilliger deed, en hoe druk het was per maand (zie stap 7).
 
 **Hoe het voorstel gemaakt wordt.** De tool gebruikt vaste regels, geen AI. Dezelfde keuzes geven altijd hetzelfde voorstel. De regels staan in `roosterregels.js`, met uitleg:
 
@@ -77,7 +78,7 @@ Ga terug naar de spreadsheet. Je ziet nu de tabbladen **Instellingen**, **Vrijwi
 
 `installeer()` mag je gerust opnieuw uitvoeren, bijvoorbeeld via het menu **Rooster → Tabbladen installeren of herstellen**. Bestaande gegevens en instellingen blijven staan. Enkel ontbrekende tabbladen, kolomkoppen en instellingen worden toegevoegd.
 
-`installeer()` zorgt er ook voor dat oude gegevens elke nacht automatisch gewist worden (zie de instelling `bewaartermijn_maanden`).
+`installeer()` zet ook een automatische taak klaar die op de **1ste van elke maand** draait. In januari werkt die het jaaroverzicht van het afgelopen jaar af. Daarna wist ze de gegevens die ouder zijn dan de bewaartermijn (zie `bewaartermijn_maanden` in stap 7). De Kalender-tabbladen en de jaaroverzichten worden nooit gewist.
 
 ---
 
@@ -196,7 +197,7 @@ Alle instellingen staan in het tabblad **Instellingen** van de spreadsheet. Pas 
 | `code_coordinator` | (willekeurig) | De code voor de coördinator. Deel die niet. |
 | `inschrijving_sluit` | 7 | Zoveel dagen voor het begin van de maand sluit het invullen. De coördinator kan daarna nog wel invullen. |
 | `afmelding_backup_valt_automatisch_in` | nee | `ja`: bij een afmelding neemt de back-up meteen over. `nee`: de coördinator bevestigt. |
-| `bewaartermijn_maanden` | 12 | Gegevens ouder dan zoveel maanden worden elke nacht gewist. De Kalender-tabbladen blijven staan. Pas dan ook de termijn aan in `tekst_privacy`. |
+| `bewaartermijn_maanden` | 12 | Gegevens ouder dan zoveel maanden worden op de 1ste van elke maand gewist. `0` betekent: nooit wissen. De Kalender-tabbladen en de jaaroverzichten blijven altijd staan. Pas ook de termijn aan in `tekst_privacy` als je dit wijzigt. |
 | `minstens_een_ervaren_per_avond` | nee | Zie hieronder. |
 | `tekst_welkom` | | De welkomsttekst bovenaan. |
 | `tekst_uitleg` | | De uitleg onder "Hoe werkt het?". |
@@ -217,6 +218,23 @@ Gebruik deze regel als er op elke avond iemand moet zijn die de bib kent of een 
 Uitzetten: zet de instelling terug op `nee`. De kolom ervaren wordt dan genegeerd.
 
 Vrijwilligers zien nooit wie als ervaren staat.
+
+### Het jaaroverzicht
+
+Per jaar is er een tabblad **Jaaroverzicht 2026**, **Jaaroverzicht 2027**, enzovoort. Daarin staan drie tabellen:
+
+- **Shiften als vrijwilliger**: per voornaam het aantal shiften per maand en het totaal van het jaar. Handig om vrijwilligers te bedanken.
+- **Back-ups**: hetzelfde, voor de keren dat iemand back-up was.
+- **Per maand**: hoe druk het was. Je ziet het aantal open avonden en avonden die gesloten waren of een workshop hadden. Je ziet ook hoeveel avonden genoeg of te weinig vrijwilligers hadden, hoeveel avonden geen back-up hadden, hoeveel verschillende mensen meehielpen, hoeveel mensen hun beschikbaarheid invulden en hoeveel afmeldingen er waren.
+
+Namen staan alfabetisch, zodat het geen ranglijst wordt. Afmeldingen worden enkel per maand geteld, niet per persoon.
+
+**Wanneer het bijgewerkt wordt:**
+- Elk jaar in januari vanzelf, voor het afgelopen jaar.
+- Vóór oude gegevens gewist worden: dan worden de aantallen eerst bewaard. Wat al in het overzicht staat, blijft staan, ook als de details weg zijn.
+- Wanneer je wil, via het menu **Rooster → Jaaroverzicht bijwerken** (voor dit en vorig jaar).
+
+Enkel gepubliceerde roosters tellen mee. Een vervanging na een afmelding telt mee voor wie de shift overnam.
 
 ---
 
@@ -248,7 +266,7 @@ Wijzigingen aan de website zelf (`index.html`, `app.js`, `styles.css`, `roosterr
 | Een wijziging in het script werkt niet | Publiceer een nieuwe versie (stap 8). |
 | De site toont nog de oude versie | Wacht een paar minuten en herlaad. Kijk op GitHub bij **Actions** of de publicatie gelukt is. |
 | Iemand staat er twee keer in, anders geschreven | Keur de nieuwe naam goed met de juiste schrijfwijze (de naam van wie al in de lijst staat). De twee worden dan samengevoegd. |
-| De keuzes van een maand zijn weg | Gegevens ouder dan `bewaartermijn_maanden` worden gewist. Het Kalender-tabblad blijft wel staan. |
+| De keuzes van een maand zijn weg | Gegevens ouder dan `bewaartermijn_maanden` worden gewist. Het Kalender-tabblad en het jaaroverzicht blijven wel staan. |
 | Iets anders | Kijk in het tabblad **Logboek** wat er gebeurde. In de Apps Script-editor zie je links bij **Uitvoeringen** eventuele foutmeldingen. |
 
 Werkt het nog altijd niet? Zet de vrijwilligers tijdelijk terug op de WhatsApp-poll. Het tabblad Kalender kan je altijd met de hand invullen.
@@ -263,6 +281,7 @@ Voor een volgende beheerder:
 |---|---|
 | De website | Deze repository op GitHub, `ProjectMadrigal/Rooster`. Online via GitHub Pages (stap 5). |
 | De gegevens | De Google-spreadsheet **Rooster Project Madrigal** in het Google-account van Madrigal. |
+| De geschiedenis | De tabbladen **Kalender …** (per maand) en **Jaaroverzicht …** (per jaar) in die spreadsheet. |
 | Het script | In die spreadsheet: **Extensies → Apps Script**. Een kopie staat in [`apps-script/Code.gs`](apps-script/Code.gs). Hou die twee gelijk. |
 | De koppeling | De URL van de web-app, in [`config.js`](config.js). |
 | De codes en instellingen | Het tabblad **Instellingen** in de spreadsheet. Nooit in deze repository: die is publiek. |
@@ -278,4 +297,4 @@ De tool heeft geen framework en geen build-stap. Wie een beetje HTML kent, kan d
 
 ### Privacy
 
-De tool bewaart enkel voornamen en roosterkeuzes: per vrijdag de keuze, het aantal shiften, back-up ja of nee, met wie je graag samen staat, een opmerking en het tijdstip van invullen. Er worden geen telefoonnummers of e-mailadressen bewaard. Gegevens ouder dan de bewaartermijn worden automatisch gewist, behalve de Kalender-tabbladen. Die verwijdert de coördinator zelf als dat nodig is.
+De tool bewaart enkel voornamen en roosterkeuzes: per vrijdag de keuze, het aantal shiften, back-up ja of nee, met wie je graag samen staat, een opmerking en het tijdstip van invullen. Er worden geen telefoonnummers of e-mailadressen bewaard. Gegevens ouder dan de bewaartermijn worden automatisch gewist, op de 1ste van elke maand. Wat blijft: de Kalender-tabbladen (wie wanneer stond) en de jaaroverzichten (per voornaam het aantal shiften en back-ups). Die verwijdert de coördinator zelf als dat nodig is, bijvoorbeeld als iemand vraagt om gewist te worden.

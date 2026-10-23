@@ -59,7 +59,8 @@ function standaardInstellingen() {
     ['code_coordinator', maakCode(), 'De code voor de coördinator. Deel die niet in de groep.'],
     ['inschrijving_sluit', 7, 'Zoveel dagen voor het begin van de maand kan je niet meer invullen.'],
     ['afmelding_backup_valt_automatisch_in', 'nee', 'ja: bij een afmelding neemt de back-up meteen over. nee: de coördinator bevestigt.'],
-    ['bewaartermijn_maanden', 12, 'Gegevens ouder dan zoveel maanden worden automatisch gewist (de Kalender-tabbladen blijven).'],
+    ['bewaartermijn_maanden', 12, 'Gegevens ouder dan zoveel maanden worden op de 1ste van elke maand gewist. ' +
+      '0 = nooit wissen. De Kalender-tabbladen en de jaaroverzichten blijven altijd staan.'],
     ['minstens_een_ervaren_per_avond', 'nee', 'ja: minstens één vrijwilliger per avond staat als ervaren in het tabblad Vrijwilligers.'],
     ['tekst_welkom', 'Fijn dat je meehelpt in de bib! Duid hier aan wanneer je kan.', 'Welkomsttekst bovenaan de pagina.'],
     ['tekst_uitleg', 'Kies je naam en de maand. Duid per avond aan of je graag komt, kan als het moet, of niet kan. ' +
@@ -67,7 +68,9 @@ function standaardInstellingen() {
       'Uitleg voor vrijwilligers.'],
     ['tekst_privacy', 'We bewaren enkel je voornaam en je keuzes: wanneer je kan, hoeveel shiften je wil, ' +
       'of je back-up wil zijn, met wie je graag samen staat en je opmerking. We gebruiken dat alleen om het rooster ' +
-      'van de bib te maken. Na 12 maanden wissen we het automatisch. Vragen, of wil je dat we je gegevens wissen? ' +
+      'van de bib te maken. Na 12 maanden wissen we het automatisch. Wat blijft: het rooster per maand (wie wanneer ' +
+      'stond) en een jaaroverzicht met per voornaam het aantal shiften, om vrijwilligers te kunnen bedanken. ' +
+      'Vragen, of wil je dat we je gegevens wissen? ' +
       'Spreek de coördinator aan.', 'Privacymelding. Pas de termijn aan als je bewaartermijn_maanden wijzigt.']
   ];
 }
@@ -116,11 +119,11 @@ function installeer() {
   blad(TAB.rooster).setColumnWidth(5, 480);
   blad(TAB.beschikbaarheid).setColumnWidth(3, 420);
 
-  // Eén keer per dag oude gegevens opruimen.
-  var heeftTrigger = ScriptApp.getProjectTriggers().some(function (t) {
-    return t.getHandlerFunction() === 'opruimen';
+  // Op de 1ste van elke maand: het jaaroverzicht bijwerken (in januari) en oude gegevens opruimen.
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (['opruimen', 'maandelijks'].indexOf(t.getHandlerFunction()) >= 0) ScriptApp.deleteTrigger(t);
   });
-  if (!heeftTrigger) ScriptApp.newTrigger('opruimen').timeBased().everyDays(1).atHour(3).create();
+  ScriptApp.newTrigger('maandelijks').timeBased().onMonthDay(1).atHour(3).create();
 
   var standaard = ss.getSheetByName('Blad1') || ss.getSheetByName('Sheet1');
   if (standaard && standaard.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(standaard);
@@ -133,6 +136,7 @@ function installeer() {
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Rooster')
     .addItem('Tabbladen installeren of herstellen', 'installeer')
+    .addItem('Jaaroverzicht bijwerken', 'jaaroverzichtBijwerken')
     .addItem('Oude gegevens nu opruimen', 'opruimen')
     .addToUi();
 }
@@ -568,7 +572,15 @@ function maakKalender(maand) {
 // Oude gegevens wissen
 // ---------------------------------------------------------------------------
 
-/** Wist gegevens ouder dan bewaartermijn_maanden. Draait elke nacht vanzelf. */
+/** Draait vanzelf op de 1ste van elke maand. */
+function maandelijks() {
+  // In januari: het jaaroverzicht van het afgelopen jaar afwerken.
+  var d = new Date();
+  if (d.getMonth() === 0) maakJaaroverzicht(d.getFullYear() - 1);
+  opruimen();
+}
+
+/** Wist gegevens ouder dan bewaartermijn_maanden (0 = nooit wissen). */
 function opruimen() {
   var inst = leesInstellingen();
   var maanden = getal(inst.bewaartermijn_maanden, 12);
@@ -576,6 +588,15 @@ function opruimen() {
   var d = new Date();
   var grens = new Date(d.getFullYear(), d.getMonth() - maanden, 1);
   var grensTekst = Utilities.formatDate(grens, tijdzone(), 'yyyy-MM-dd');
+
+  // Eerst de aantallen bewaren in het jaaroverzicht, voor het rooster gewist wordt.
+  var jaren = {};
+  leesRijen(TAB.rooster).forEach(function (r) {
+    var datum = alsDatumTekst(r[0]);
+    if (datum && datum < grensTekst) jaren[datum.slice(0, 4)] = true;
+  });
+  Object.keys(jaren).forEach(maakJaaroverzicht);
+
   var gewist = 0;
   [[TAB.beschikbaarheid, 0], [TAB.avonden, 0], [TAB.rooster, 0], [TAB.afmeldingen, 1], [TAB.logboek, 0]].forEach(function (x) {
     gewist += bewaarRijen(x[0], function (r) {
@@ -585,6 +606,166 @@ function opruimen() {
     });
   });
   if (gewist) log('opgeruimd', gewist + ' oude rijen gewist (ouder dan ' + grensTekst + ').');
+}
+
+// ---------------------------------------------------------------------------
+// Jaaroverzicht: per voornaam het aantal shiften, en per maand hoe druk het was
+// ---------------------------------------------------------------------------
+
+var MAANDEN_KORT = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+var JO_SHIFTEN = 'Shiften als vrijwilliger';
+var JO_BACKUPS = 'Back-ups';
+var JO_MAAND = 'Per maand';
+var JO_CIJFERS = [
+  'open avonden',
+  'gesloten, workshop of ander',
+  'avonden met genoeg vrijwilligers',
+  'avonden met te weinig vrijwilligers',
+  'avonden zonder back-up',
+  'verschillende vrijwilligers ingezet',
+  'beschikbaarheden ingevuld',
+  'afmeldingen'
+];
+
+/** Menu: werkt het jaaroverzicht van dit jaar en vorig jaar bij. */
+function jaaroverzichtBijwerken() {
+  var jaar = new Date().getFullYear();
+  maakJaaroverzicht(jaar - 1);
+  maakJaaroverzicht(jaar);
+}
+
+// Maakt of werkt het tabblad "Jaaroverzicht <jaar>" bij. Enkel maanden met een
+// gepubliceerd rooster worden opnieuw geteld. Voor maanden waarvan de gegevens al
+// gewist zijn, blijven de getallen staan die er al stonden.
+function maakJaaroverzicht(jaar) {
+  jaar = String(jaar);
+  var inst = leesInstellingen();
+  var nodig = publiekeInstellingen(inst).aantalVrijwilligers;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var tabNaam = 'Jaaroverzicht ' + jaar;
+  var k = ss.getSheetByName(tabNaam);
+  var cijfers = k ? leesJaaroverzicht(k) : {};
+  cijfers[JO_SHIFTEN] = cijfers[JO_SHIFTEN] || {};
+  cijfers[JO_BACKUPS] = cijfers[JO_BACKUPS] || {};
+  cijfers[JO_MAAND] = cijfers[JO_MAAND] || {};
+
+  var rooster = leesRijen(TAB.rooster).map(function (r) {
+    return {
+      datum: alsDatumTekst(r[0]),
+      vrijwilligers: [String(r[1]).trim(), String(r[2]).trim()].filter(Boolean),
+      backups: [String(r[3]).trim()].filter(Boolean),
+      gepubliceerd: String(r[5]).trim() === 'gepubliceerd'
+    };
+  });
+  var beschikbaarheden = leesBeschikbaarhedenAlle();
+  var afmeldingen = leesAfmeldingen();
+  var bijgewerkt = 0;
+
+  MAANDEN_KORT.forEach(function (_, i) {
+    var maand = jaar + '-' + ('0' + (i + 1)).slice(-2);
+    var rijen = rooster.filter(function (r) { return r.gepubliceerd && r.datum.slice(0, 7) === maand; });
+    if (!rijen.length) return;
+    bijgewerkt++;
+    [JO_SHIFTEN, JO_BACKUPS].forEach(function (t) {
+      Object.keys(cijfers[t]).forEach(function (n) { cijfers[t][n][i] = ''; });
+    });
+    function tel(tabel, naam) {
+      tabel[naam] = tabel[naam] || [];
+      tabel[naam][i] = (Number(tabel[naam][i]) || 0) + 1;
+    }
+    var perDatum = {};
+    var mensen = {};
+    rijen.forEach(function (r) {
+      perDatum[r.datum] = r;
+      r.vrijwilligers.forEach(function (n) { tel(cijfers[JO_SHIFTEN], n); mensen[n] = true; });
+      r.backups.forEach(function (n) { tel(cijfers[JO_BACKUPS], n); mensen[n] = true; });
+    });
+    var avonden = avondenVoorMaand(maand, inst);
+    var open = avonden.filter(function (a) { return a.status === 'open'; });
+    var genoeg = open.filter(function (a) { return perDatum[a.datum] && perDatum[a.datum].vrijwilligers.length >= nodig; }).length;
+    var waarden = [
+      open.length,
+      avonden.length - open.length,
+      genoeg,
+      open.length - genoeg,
+      open.filter(function (a) { return !perDatum[a.datum] || !perDatum[a.datum].backups.length; }).length,
+      Object.keys(mensen).length,
+      beschikbaarheden.filter(function (b) { return b.maand === maand; }).length,
+      afmeldingen.filter(function (a) { return a.datum.slice(0, 7) === maand; }).length
+    ];
+    JO_CIJFERS.forEach(function (c, j) {
+      cijfers[JO_MAAND][c] = cijfers[JO_MAAND][c] || [];
+      cijfers[JO_MAAND][c][i] = waarden[j];
+    });
+  });
+  if (!bijgewerkt && !k) return;
+
+  // Het tabblad opnieuw opbouwen.
+  var rijen = [
+    ['Jaaroverzicht ' + jaar],
+    ['Bijgewerkt op ' + nu() + '. Namen staan alfabetisch. Een lege maand: geen gepubliceerd rooster.'],
+    []
+  ];
+  var vet = [];
+  function tabel(titel, lijst, eerste, totaal) {
+    vet.push(rijen.length + 1, rijen.length + 2);
+    rijen.push([titel]);
+    rijen.push([eerste].concat(MAANDEN_KORT, ['totaal']));
+    lijst.forEach(function (x) {
+      var w = MAANDEN_KORT.map(function (_, i) { var v = x.waarden[i]; return v === '' || v == null ? '' : Number(v); });
+      rijen.push([x.naam].concat(w, [totaal ? totaal(x) : w.reduce(function (s, v) { return s + (Number(v) || 0); }, 0)]));
+    });
+    rijen.push([]);
+  }
+  function namenLijst(t) {
+    return Object.keys(cijfers[t]).filter(function (n) {
+      return cijfers[t][n].some(function (v) { return Number(v) > 0; });
+    }).sort(function (a, b) { return a.localeCompare(b, 'nl'); })
+      .map(function (n) { return { naam: n, waarden: cijfers[t][n] }; });
+  }
+  var shiften = namenLijst(JO_SHIFTEN), backups = namenLijst(JO_BACKUPS);
+  tabel(JO_SHIFTEN, shiften, 'voornaam');
+  tabel(JO_BACKUPS, backups, 'voornaam');
+  var iedereen = {};
+  shiften.concat(backups).forEach(function (x) { iedereen[x.naam] = true; });
+  tabel(JO_MAAND, JO_CIJFERS.map(function (c) { return { naam: c, waarden: cijfers[JO_MAAND][c] || [] }; }), '',
+    function (x) {
+      // Verschillende vrijwilligers: wie dit jaar minstens één keer meehielp.
+      return x.naam === 'verschillende vrijwilligers ingezet' ? Object.keys(iedereen).length
+        : x.waarden.reduce(function (s, v) { return s + (Number(v) || 0); }, 0);
+    });
+
+  var breed = rijen.map(function (r) { var x = r.slice(); while (x.length < 14) x.push(''); return x; });
+  k = k || ss.insertSheet(tabNaam);
+  k.clear();
+  k.getRange(1, 1, breed.length, 14).setValues(breed);
+  k.getRange(1, 1).setFontSize(14).setFontWeight('bold');
+  k.getRange(2, 1).setFontStyle('italic');
+  vet.forEach(function (r) { k.getRange(r, 1, 1, 14).setFontWeight('bold'); });
+  k.setColumnWidth(1, 260);
+  for (var c = 2; c <= 14; c++) k.setColumnWidth(c, 48);
+  log('jaaroverzicht bijgewerkt', jaar);
+}
+
+// Leest de getallen terug uit een bestaand jaaroverzicht.
+function leesJaaroverzicht(k) {
+  var n = k.getLastRow();
+  var uit = {};
+  if (n < 1) return uit;
+  var waarden = k.getRange(1, 1, n, 14).getValues();
+  var huidig = null;
+  for (var r = 0; r < waarden.length; r++) {
+    var eerste = String(waarden[r][0]).trim();
+    if (eerste === JO_SHIFTEN || eerste === JO_BACKUPS || eerste === JO_MAAND) {
+      huidig = eerste;
+      uit[huidig] = {};
+      r++; // de rij met de maanden overslaan
+      continue;
+    }
+    if (!eerste) { huidig = null; continue; }
+    if (huidig) uit[huidig][eerste] = waarden[r].slice(1, 13);
+  }
+  return uit;
 }
 
 // ---------------------------------------------------------------------------

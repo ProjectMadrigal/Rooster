@@ -162,4 +162,5 @@ Op deze punten was de opdracht niet duidelijk. De keuzes zijn met de opdrachtgev
 - **4de en laatste vrijdag**: hebben die allebei een terugkerend event, dan wint "laatste".
 - **Nieuwe namen** kunnen al hun beschikbaarheid invullen, maar worden pas ingepland nadat de coördinator ze goedkeurt.
 - **"Maakt niet uit"** bij het aantal shiften betekent: de waarde van `standaard_max_shiften_per_maand`.
+- **Wissen en jaaroverzicht** (afgesproken op 23 oktober 2026): oude gegevens worden maandelijks gewist, niet elke nacht. `bewaartermijn_maanden` op 0 zet het wissen uit. Een tabblad "Jaaroverzicht" per jaar bewaart per voornaam het aantal shiften en back-ups per maand, en per maand hoe druk het was. Het wordt elk jaar in januari bijgewerkt, en ook vóór het wissen. Namen staan alfabetisch; afmeldingen worden niet per persoon geteld.
 - **Aantal vrijwilligers en back-ups**: het tabblad Rooster heeft vaste kolommen voor vrijwilliger 1, vrijwilliger 2 en back-up. Daarom kan `aantal_vrijwilligers` 1 of 2 zijn en `aantal_backups` 0 of 1.
