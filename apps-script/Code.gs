@@ -206,7 +206,7 @@ function verwerk(vraag) {
   if (!vraag || typeof vraag !== 'object') weiger('Ongeldige vraag.');
   var inst = leesInstellingen();
   var rol = bepaalRol(vraag.code, inst);
-  if (!rol) weiger('Deze code klopt niet. Kijk de code nog eens na in de WhatsApp-groep.');
+  if (!rol) return { ok: false, codeFout: true, fout: 'Deze code klopt niet. Kijk de code nog eens na in de WhatsApp-groep.' };
   var actie = String(vraag.actie || '');
   var functie = ACTIES_VRIJWILLIGER[actie] || (rol === 'coordinator' ? ACTIES_COORDINATOR[actie] : null);
   if (!functie) weiger(ACTIES_COORDINATOR[actie] ? 'Hiervoor heb je de code van de coördinator nodig.' : 'Onbekende actie.');
