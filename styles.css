@@ -281,7 +281,7 @@ textarea { min-height: 6rem; resize: vertical; }
 .rooster li p { margin-bottom: 0.25rem; }
 .rooster li .knop { margin-top: 0.5rem; }
 
-/* Coördinator */
+/* Planner */
 body:has(.sectie) .breed { max-width: var(--breedte-coordinator); }
 .sectie { margin-bottom: 2rem; }
 .avond-beheer { display: grid; gap: 0.75rem; }
@@ -308,7 +308,7 @@ body:has(.sectie) .breed { max-width: var(--breedte-coordinator); }
 }
 .tabel td.opmerking { white-space: normal; min-width: 12rem; }
 .k-graag { background: var(--kleur-graag); font-weight: 700; }
-.k-kan { background: var(--kleur-kan); }
+.k-backup, .k-kan { background: var(--kleur-kan); }
 .k-niet { background: var(--kleur-niet); color: var(--kleur-tekst-zacht); }
 
 @media (min-width: 40rem) {
