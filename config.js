@@ -8,5 +8,5 @@
  * Zet hier geen codes of namen: deze repository is publiek.
  */
 window.ROOSTER_CONFIG = {
-  scriptUrl: ''
+  scriptUrl: 'https://script.google.com/macros/s/AKfycbzURzSTIgH7kdBSxTU_C-i8Hb7ekjEas8iLUEpUsNQX0tGvj5FmIw_tV8AgAWsDzCKW/exec'
 };
