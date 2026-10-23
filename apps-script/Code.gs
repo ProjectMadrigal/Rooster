@@ -27,16 +27,20 @@ var TAB = {
 
 var KOLOMMEN = {
   Instellingen: ['sleutel', 'waarde', 'uitleg'],
-  Vrijwilligers: ['voornaam', 'actief', 'ervaren / heeft sleutel', 'opmerking voor de coördinator'],
+  Vrijwilligers: ['voornaam', 'actief', 'ervaren / heeft sleutel', 'opmerking voor de planner'],
   Avonden: ['datum', 'status', 'event'],
-  Beschikbaarheid: ['maand', 'voornaam', 'keuzes', 'max shiften', 'wil back-up zijn', 'graag samen met', 'opmerking', 'ingevuld op'],
+  // De kolom 'niet meer gebruikt' was vroeger 'wil back-up zijn'. Ze blijft staan zodat de volgorde van de kolommen klopt.
+  Beschikbaarheid: ['maand', 'voornaam', 'keuzes', 'max shiften', 'niet meer gebruikt', 'graag samen met', 'opmerking', 'ingevuld op'],
   Rooster: ['datum', 'vrijwilliger 1', 'vrijwilliger 2', 'back-up', 'motivatie', 'status', 'bijgewerkt op'],
   Afmeldingen: ['tijdstip', 'datum', 'voornaam', 'rol', 'status', 'vervanger'],
   Logboek: ['tijdstip', 'actie', 'details']
 };
 
 var STATUSSEN = ['open', 'gesloten', 'workshop', 'ander'];
-var KEUZES = { graag: 'graag', kan: 'kan als het moet', niet: 'niet' };
+// graag: wil die avond in de bib staan. backup: enkel als back-up, springt in als iemand niet kan.
+var KEUZES = { graag: 'graag', backup: 'back-up', niet: 'niet' };
+// Oude keuzes in de spreadsheet: 'kan als het moet' telt als back-up.
+var OUDE_KEUZES = { 'kan als het moet': 'backup' };
 var WEKEN = ['1ste', '2de', '3de', '4de', 'laatste'];
 var DAGEN = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
 var MAANDEN = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus',
@@ -56,22 +60,23 @@ function standaardInstellingen() {
     ['backup_telt_mee_voor_maximum', 'nee', 'ja: een back-up-beurt telt mee als shift voor het maximum.'],
     ['niet_twee_weken_na_elkaar', 'ja', 'ja: de tool vermijdt dat iemand twee weken na elkaar staat (als het kan).'],
     ['toegangscode_vrijwilligers', maakCode(), 'De code die je deelt in de WhatsApp-groep. Pas gerust aan.'],
-    ['code_coordinator', maakCode(), 'De code voor de coördinator. Deel die niet in de groep.'],
+    ['code_planner', maakCode(), 'De code voor de planner. Deel die niet in de groep.'],
     ['inschrijving_sluit', 7, 'Zoveel dagen voor het begin van de maand kan je niet meer invullen.'],
-    ['afmelding_backup_valt_automatisch_in', 'nee', 'ja: bij een afmelding neemt de back-up meteen over. nee: de coördinator bevestigt.'],
+    ['afmelding_backup_valt_automatisch_in', 'nee', 'ja: bij een afmelding neemt de back-up meteen over. nee: de planner bevestigt.'],
     ['bewaartermijn_maanden', 12, 'Gegevens ouder dan zoveel maanden worden op de 1ste van elke maand gewist. ' +
       '0 = nooit wissen. De Kalender-tabbladen en de jaaroverzichten blijven altijd staan.'],
     ['minstens_een_ervaren_per_avond', 'nee', 'ja: minstens één vrijwilliger per avond staat als ervaren in het tabblad Vrijwilligers.'],
     ['tekst_welkom', 'Fijn dat je meehelpt in de bib! Duid hier aan wanneer je kan.', 'Welkomsttekst bovenaan de pagina.'],
-    ['tekst_uitleg', 'Kies je naam en de maand. Duid per avond aan of je graag komt, kan als het moet, of niet kan. ' +
-      'De coördinator maakt daarna het rooster. Kan je toch niet op een avond waarvoor je ingepland staat? Meld je dan af bij Rooster.',
+    ['tekst_uitleg', 'Kies je naam en de maand. Duid per avond aan of je graag komt, enkel back-up wil zijn, of niet kan. ' +
+      'Een back-up springt in als iemand toch niet kan. ' +
+      'De planner maakt daarna het rooster. Kan je toch niet op een avond waarvoor je ingepland staat? Meld je dan af bij Rooster.',
       'Uitleg voor vrijwilligers.'],
     ['tekst_privacy', 'We bewaren enkel je voornaam en je keuzes: wanneer je kan, hoeveel shiften je wil, ' +
-      'of je back-up wil zijn, met wie je graag samen staat en je opmerking. We gebruiken dat alleen om het rooster ' +
+      'met wie je graag samen staat en je opmerking. We gebruiken dat alleen om het rooster ' +
       'van de bib te maken. Na 12 maanden wissen we het automatisch. Wat blijft: het rooster per maand (wie wanneer ' +
       'stond) en een jaaroverzicht met per voornaam het aantal shiften, om vrijwilligers te kunnen bedanken. ' +
       'Vragen, of wil je dat we je gegevens wissen? ' +
-      'Spreek de coördinator aan.', 'Privacymelding. Pas de termijn aan als je bewaartermijn_maanden wijzigt.']
+      'Spreek de planner aan.', 'Privacymelding. Pas de termijn aan als je bewaartermijn_maanden wijzigt.']
   ];
 }
 
@@ -95,8 +100,9 @@ function installeer() {
   zetTekstKolom(TAB.rooster, 1);
   zetTekstKolom(TAB.afmeldingen, 2);
 
-  // Instellingen: ontbrekende sleutels toevoegen.
+  // Instellingen: eerst oude namen en teksten bijwerken, dan ontbrekende sleutels toevoegen.
   var inst = blad(TAB.instellingen);
+  werkOudeInstellingenBij(inst);
   var bestaand = leesRijen(TAB.instellingen).map(function (r) { return String(r[0]).trim(); });
   standaardInstellingen().forEach(function (rij) {
     if (bestaand.indexOf(rij[0]) < 0) inst.appendRow(rij);
@@ -130,6 +136,39 @@ function installeer() {
 
   log('installeer', 'Tabbladen aangemaakt of bijgewerkt.');
   Logger.log('Klaar. De codes staan in het tabblad Instellingen.');
+}
+
+/**
+ * Oktober 2026: de rol die vroeger "coordinator" (met trema) heette, heet nu "planner", en "kan als het moet" is "back-up".
+ *   - De sleutel code_coordinator wordt code_planner. De code zelf blijft dezelfde.
+ *   - Staan tekst_uitleg of tekst_privacy nog op de oude standaardtekst, dan komt
+ *     de nieuwe standaardtekst in de plaats. Een tekst die je zelf aanpaste, blijft staan.
+ */
+function werkOudeInstellingenBij(inst) {
+  var oudeTeksten = {
+    tekst_uitleg: 'Kies je naam en de maand. Duid per avond aan of je graag komt, kan als het moet, of niet kan. ' +
+      'De co\u00f6rdinator maakt daarna het rooster. Kan je toch niet op een avond waarvoor je ingepland staat? Meld je dan af bij Rooster.',
+    tekst_privacy: 'We bewaren enkel je voornaam en je keuzes: wanneer je kan, hoeveel shiften je wil, ' +
+      'of je back-up wil zijn, met wie je graag samen staat en je opmerking. We gebruiken dat alleen om het rooster ' +
+      'van de bib te maken. Na 12 maanden wissen we het automatisch. Wat blijft: het rooster per maand (wie wanneer ' +
+      'stond) en een jaaroverzicht met per voornaam het aantal shiften, om vrijwilligers te kunnen bedanken. ' +
+      'Vragen, of wil je dat we je gegevens wissen? Spreek de co\u00f6rdinator aan.'
+  };
+  var nieuw = {};
+  standaardInstellingen().forEach(function (r) { nieuw[r[0]] = r; });
+  var rijen = leesRijen(TAB.instellingen);
+  var sleutels = rijen.map(function (r) { return String(r[0]).trim(); });
+  rijen.forEach(function (r, i) {
+    var k = String(r[0]).trim();
+    if (k === 'code_coordinator' && sleutels.indexOf('code_planner') < 0) {
+      inst.getRange(i + 2, 1).setValue('code_planner');
+      inst.getRange(i + 2, 3).setValue(nieuw.code_planner[2]);
+    } else if (oudeTeksten[k] && String(r[1]).trim() === oudeTeksten[k]) {
+      inst.getRange(i + 2, 2).setValue(nieuw[k][1]);
+    } else if (nieuw[k] && /co\u00f6rdinator/.test(String(r[2]))) {
+      inst.getRange(i + 2, 3).setValue(nieuw[k][2]); // enkel de uitleg in kolom C
+    }
+  });
 }
 
 /** Voegt een menu "Rooster" toe aan de spreadsheet. */
@@ -213,7 +252,7 @@ function verwerk(vraag) {
   if (!rol) return { ok: false, codeFout: true, fout: 'Deze code klopt niet. Kijk de code nog eens na in de WhatsApp-groep.' };
   var actie = String(vraag.actie || '');
   var functie = ACTIES_VRIJWILLIGER[actie] || (rol === 'coordinator' ? ACTIES_COORDINATOR[actie] : null);
-  if (!functie) weiger(ACTIES_COORDINATOR[actie] ? 'Hiervoor heb je de code van de coördinator nodig.' : 'Onbekende actie.');
+  if (!functie) weiger(ACTIES_COORDINATOR[actie] ? 'Hiervoor heb je de code van de planner nodig.' : 'Onbekende actie.');
   var schrijft = actie !== 'start' && actie !== 'maand' && actie !== 'mijnBeschikbaarheid' && actie !== 'coordMaand';
   if (!schrijft) return functie(vraag, inst, rol);
   // Bij schrijven: één tegelijk, zodat twee mensen elkaar niet overschrijven.
@@ -230,7 +269,8 @@ function verwerk(vraag) {
 function bepaalRol(code, inst) {
   var c = String(code || '').trim().toLowerCase();
   if (!c || c.length > 100) return null;
-  if (c === String(inst.code_coordinator || '').trim().toLowerCase()) return 'coordinator';
+  // code_coordinator: de oude naam van code_planner, voor een spreadsheet waar installeer nog niet opnieuw liep.
+  if (c === String(inst.code_planner || inst.code_coordinator || '').trim().toLowerCase()) return 'coordinator';
   if (c === String(inst.toegangscode_vrijwilligers || '').trim().toLowerCase()) return 'vrijwilliger';
   return null;
 }
@@ -285,7 +325,7 @@ function actieMijnBeschikbaarheid(vraag) {
 function actieBewaarBeschikbaarheid(vraag, inst, rol) {
   var maand = controleerMaand(vraag.maand);
   if (rol !== 'coordinator' && !inschrijving(maand, inst).open) {
-    weiger('Invullen voor ' + maandTekst(maand) + ' kan niet meer. Spreek de coördinator aan.');
+    weiger('Invullen voor ' + maandTekst(maand) + ' kan niet meer. Spreek de planner aan.');
   }
   var naam = normaliseerNaam(vraag.naam);
   if (!naam) weiger('Kies je naam of typ je voornaam.');
@@ -305,7 +345,6 @@ function actieBewaarBeschikbaarheid(vraag, inst, rol) {
     max = Number(max);
     if ([1, 2, 3, 4].indexOf(max) < 0) weiger('Kies hoeveel shiften je wil doen.');
   }
-  if (typeof vraag.backup !== 'boolean') weiger('Duid aan of je back-up wil zijn.');
   var opmerking = schoneTekst(vraag.opmerking, 500);
 
   // De naam: een bestaande vrijwilliger, of een nieuwe naam die op goedkeuring wacht.
@@ -343,7 +382,7 @@ function actieBewaarBeschikbaarheid(vraag, inst, rol) {
     veilig(naam),
     avonden.map(function (a) { return a.datum + ': ' + KEUZES[schoon[a.datum]]; }).join('; '),
     max === 'maakt niet uit' ? 'maakt niet uit' : max,
-    vraag.backup ? 'ja' : 'nee',
+    '', // niet meer gebruikt (vroeger: wil back-up zijn)
     veilig(samenMet),
     veilig(opmerking),
     nu()
@@ -378,7 +417,7 @@ function actieAfmelden(vraag, inst) {
 }
 
 // ---------------------------------------------------------------------------
-// Acties voor de coördinator
+// Acties voor de planner
 // ---------------------------------------------------------------------------
 
 function actieCoordMaand(vraag, inst) {
@@ -891,6 +930,7 @@ function openingsdag(inst) {
 function leesBeschikbaarhedenAlle() {
   var labels = {};
   Object.keys(KEUZES).forEach(function (k) { labels[KEUZES[k]] = k; });
+  Object.keys(OUDE_KEUZES).forEach(function (l) { labels[l] = OUDE_KEUZES[l]; });
   return leesRijen(TAB.beschikbaarheid).map(function (r, i) {
     var keuzes = {};
     String(r[2] || '').split(';').forEach(function (deel) {
@@ -904,7 +944,6 @@ function leesBeschikbaarhedenAlle() {
       naam: String(r[1]).replace(/\s+/g, ' ').trim(),
       keuzes: keuzes,
       max: /^\d+$/.test(max) ? Number(max) : null,
-      backup: jaNee(r[4]),
       samenMet: String(r[5] || '').trim(),
       opmerking: String(r[6] || ''),
       ingevuld: alsTekst(r[7])
