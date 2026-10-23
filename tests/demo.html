@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo rooster Project Madrigal</title>
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <!-- Demo zonder Google: dezelfde tool, met een nagebootste server (demo-api.js).
+       Codes: "demo" (vrijwilliger) en "demo-coordinator" (coördinator). -->
+  <a class="sla-over" href="#inhoud">Naar de inhoud</a>
+  <header class="kop">
+    <div class="breed kop-binnen">
+      <img src="../icon.svg" alt="" width="40" height="40">
+      <p class="titel">Rooster <span>Project Madrigal — demo</span></p>
+    </div>
+  </header>
+  <nav id="tabs" class="tabs" aria-label="Onderdelen" hidden></nav>
+  <main id="inhoud" class="breed" tabindex="-1">
+    <p>Even laden…</p>
+  </main>
+  <footer class="voet breed">
+    <button type="button" class="link" id="privacy-knop">Privacy</button>
+    <button type="button" class="link" id="code-wissen">Andere code ingeven</button>
+  </footer>
+  <script>window.ROOSTER_CONFIG = { scriptUrl: '' };</script>
+  <script src="../roosterregels.js"></script>
+  <script src="demo-api.js"></script>
+  <script src="../app.js"></script>
+</body>
+</html>
