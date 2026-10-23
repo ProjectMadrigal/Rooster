@@ -9,7 +9,7 @@
  *   - code invullen (één keer, de browser onthoudt de code)
  *   - "Wanneer kan ik?": beschikbaarheid invullen
  *   - "Rooster": het gepubliceerde rooster, met afmelden
- *   - "Coördinator": enkel met de code van de coördinator
+ *   - "Planner": enkel met de code van de planner
  */
 (function () {
   'use strict';
@@ -19,7 +19,7 @@
   var KEUZE_LABEL = Regels.KEUZE_LABEL;
   var STATUS_LABEL = { open: 'Open', gesloten: 'Gesloten', workshop: 'Workshop', ander: 'Ander' };
   var PRIVACY_STANDAARD = 'We bewaren enkel je voornaam en je keuzes voor het rooster. ' +
-    'We wissen ze automatisch na de bewaartermijn. Vragen? Spreek de coördinator aan.';
+    'We wissen ze automatisch na de bewaartermijn. Vragen? Spreek de planner aan.';
 
   // Onthouden in de browser. In een privévenster kan dat mislukken; dan werkt alles gewoon verder.
   var opslag = {
@@ -206,7 +206,7 @@
   var SCHERMEN = [
     ['beschikbaarheid', 'Wanneer kan ik?'],
     ['rooster', 'Rooster'],
-    ['coordinator', 'Coördinator']
+    ['coordinator', 'Planner']
   ];
 
   function toonTabs() {
@@ -294,7 +294,7 @@
     var nieuw = el('input', { id: nieuwId, type: 'text', autocomplete: 'given-name', maxlength: '40', value: bekend ? '' : staat.naam });
     var nieuwVak = el('div', { class: 'veld', hidden: kies.value !== '__nieuw' },
       el('label', { for: nieuwId, tekst: 'Je voornaam' }),
-      el('p', { class: 'hulp', tekst: 'De coördinator zet je naam daarna in de lijst.' }),
+      el('p', { class: 'hulp', tekst: 'De planner zet je naam daarna in de lijst.' }),
       el('div', { class: 'rij' }, nieuw,
         el('button', { type: 'button', class: 'knop', tekst: 'Verder', onclick: kies_klaar })));
     function huidig() { return kies.value === '__nieuw' ? nieuw.value.replace(/\s+/g, ' ').trim() : kies.value; }
@@ -359,8 +359,8 @@
     if (!m.inschrijving.open) {
       vak.appendChild(el('div', { class: 'blok info' },
         el('p', { tekst: 'Invullen voor ' + maandTekst(maand) + ' is gesloten sinds ' + datumTekst(m.inschrijving.laatsteDag) + '. ' +
-          'Wil je nog iets doorgeven? Spreek de coördinator aan.' }),
-        staat.rol === 'coordinator' ? el('p', { tekst: 'Jij bent coördinator, dus jij kan toch nog invullen.' }) : null));
+          'Wil je nog iets doorgeven? Spreek de planner aan.' }),
+        staat.rol === 'coordinator' ? el('p', { tekst: 'Jij bent planner, dus jij kan toch nog invullen.' }) : null));
     } else {
       vak.appendChild(el('p', { class: 'hulp', tekst: 'Je kan invullen tot en met ' + datumTekst(m.inschrijving.laatsteDag) + '.' }));
     }
@@ -377,6 +377,9 @@
     var foutVak = el('div', { 'aria-live': 'assertive' });
     var form = el('form', { class: 'formulier', novalidate: true });
     var uren = staat.instellingen.beginuur ? ' (' + staat.instellingen.beginuur + '–' + staat.instellingen.einduur + ')' : '';
+    if (open.length) {
+      form.appendChild(el('p', { class: 'hulp', tekst: 'Graag: je wil die avond in de bib staan. Back-up: je springt in als iemand toch niet kan. Niet: je kan niet.' }));
+    }
 
     m.avonden.forEach(function (a) {
       if (a.status !== 'open') {
@@ -387,7 +390,7 @@
       }
       var groep = keuzeGroep('avond-' + a.datum, datumTekst(a.datum) + uren, [
         { waarde: 'graag', label: 'Graag' },
-        { waarde: 'kan', label: 'Kan als het moet' },
+        { waarde: 'backup', label: 'Back-up' },
         { waarde: 'niet', label: 'Niet' }
       ], vorige ? vorige.keuzes[a.datum] : null, a.event ? 'Die avond: ' + a.event : null);
       groep.classList.add('avond');
@@ -399,9 +402,6 @@
       { waarde: '1', label: '1' }, { waarde: '2', label: '2' }, { waarde: '3', label: '3' },
       { waarde: '4', label: '4' }, { waarde: 'maakt niet uit', label: 'Maakt niet uit' }
     ], maxVorig));
-    form.appendChild(keuzeGroep('backup', 'Wil je ook back-up zijn?', [
-      { waarde: 'ja', label: 'Ja' }, { waarde: 'nee', label: 'Nee' }
-    ], vorige ? (vorige.backup ? 'ja' : 'nee') : null, 'Een back-up springt in als iemand toch niet kan.'));
 
     var samenId = uniekId('samen');
     var samen = el('select', { id: samenId },
@@ -416,7 +416,7 @@
     var opmerking = el('textarea', { id: opmerkingId, rows: '3', maxlength: '500' });
     opmerking.value = vorige ? vorige.opmerking : '';
     form.appendChild(el('div', { class: 'veld' },
-      el('label', { for: opmerkingId, tekst: 'Opmerking voor de coördinator (mag je leeg laten)' }), opmerking));
+      el('label', { for: opmerkingId, tekst: 'Opmerking voor de planner (mag je leeg laten)' }), opmerking));
 
     form.appendChild(foutVak);
     var knop = el('button', { type: 'submit', class: 'knop hoofd', tekst: vorige ? 'Vervang mijn keuze' : 'Verstuur' });
@@ -433,9 +433,7 @@
         else if (!ontbreekt) ontbreekt = { naam: 'avond-' + a.datum, tekst: 'Duid voor ' + datumTekst(a.datum) + ' iets aan.' };
       });
       var max = gekozenWaarde(form, 'max');
-      var backup = gekozenWaarde(form, 'backup');
       if (!ontbreekt && !max) ontbreekt = { naam: 'max', tekst: 'Duid aan hoeveel shiften je wil doen.' };
-      if (!ontbreekt && !backup) ontbreekt = { naam: 'backup', tekst: 'Duid aan of je back-up wil zijn.' };
       if (ontbreekt) {
         foutVak.appendChild(foutBlok(ontbreekt.tekst));
         form.querySelector('input[name="' + ontbreekt.naam + '"]').focus();
@@ -444,7 +442,7 @@
       if (vorige && !window.confirm('Je vervangt je vorige keuze voor ' + maandTekst(maand) + '. Doorgaan?')) return;
       var gegevens = {
         maand: maand, naam: naam, keuzes: keuzes, max: max,
-        backup: backup === 'ja', samenMet: samen.value, opmerking: opmerking.value, overschrijf: !!vorige
+        samenMet: samen.value, opmerking: opmerking.value, overschrijf: !!vorige
       };
       verstuur(gegevens);
     });
@@ -468,7 +466,7 @@
         leeg(vak).appendChild(el('div', { class: 'blok gelukt', role: 'status' },
           el('h2', { tekst: 'Dankjewel, ' + a.naam + '!' }),
           el('p', { tekst: 'Je keuze voor ' + maandTekst(maand) + ' is bewaard.' }),
-          a.nieuweNaam ? el('p', { tekst: 'Je naam is nieuw voor ons. De coördinator zet je op de lijst.' }) : null,
+          a.nieuweNaam ? el('p', { tekst: 'Je naam is nieuw voor ons. De planner zet je op de lijst.' }) : null,
           el('button', { type: 'button', class: 'knop', tekst: 'Bekijk of pas aan', onclick: function () { ga('beschikbaarheid'); } })));
       }).catch(function (e) {
         knop.disabled = false;
@@ -540,12 +538,12 @@
   }
 
   function afmelden(knop, datum, herlaad) {
-    if (!window.confirm('Wil je je afmelden voor ' + datumTekst(datum) + '? De coördinator ziet dat meteen.')) return;
+    if (!window.confirm('Wil je je afmelden voor ' + datumTekst(datum) + '? De planner ziet dat meteen.')) return;
     knop.disabled = true;
     api('afmelden', { datum: datum, naam: staat.naam }).then(function (a) {
       window.alert(a.automatisch
         ? 'Je bent afgemeld. ' + a.vervanger + ' neemt als back-up je plaats in.'
-        : 'Je bent afgemeld. De coördinator zoekt een vervanger.');
+        : 'Je bent afgemeld. De planner zoekt een vervanger.');
       herlaad();
     }).catch(function (e) {
       knop.disabled = false;
@@ -554,7 +552,7 @@
   }
 
   // -------------------------------------------------------------------------
-  // Coördinator
+  // Planner
   // -------------------------------------------------------------------------
 
   function toonCoordinator() {
@@ -566,7 +564,7 @@
     var vak = el('div');
     maand.addEventListener('change', function () { laadCoordinator(vak, maand.value); });
     voegToe(inhoud, [
-      kop('Coördinator'),
+      kop('Planner'),
       el('div', { class: 'blok' }, el('div', { class: 'veld' }, el('label', { for: maandId, tekst: 'Maand' }), maand)),
       vak
     ]);
@@ -592,7 +590,7 @@
     return el('section', { class: 'sectie', 'aria-labelledby': id }, el('h2', { id: id, tekst: titel }));
   }
 
-  // Wat roosterregels.js nodig heeft, uit de gegevens van de coördinator.
+  // Wat roosterregels.js nodig heeft, uit de gegevens van de planner.
   function regelInvoer(d) {
     var actief = d.vrijwilligers.filter(function (v) { return v.actief === 'ja'; });
     var namen = actief.map(function (v) { return v.naam; });
@@ -680,7 +678,7 @@
     if (!lijst.length) {
       s.appendChild(el('p', { tekst: 'Nog niemand vulde ' + maandTekst(d.maand) + ' in.' }));
     } else {
-      var kort = { graag: 'graag', kan: 'kan', niet: 'niet' };
+      var kort = { graag: 'graag', backup: 'back-up', niet: 'niet' };
       var tabel = el('table', { class: 'tabel' },
         el('caption', { tekst: 'Beschikbaarheid in ' + maandTekst(d.maand) }),
         el('thead', null, el('tr', null,
@@ -690,7 +688,6 @@
               kortDatum(a.datum), a.status !== 'open' ? el('span', { class: 'klein', tekst: ' ' + STATUS_LABEL[a.status].toLowerCase() }) : null);
           }),
           el('th', { scope: 'col', tekst: 'Max' }),
-          el('th', { scope: 'col', tekst: 'Back-up' }),
           el('th', { scope: 'col', tekst: 'Samen met' }),
           el('th', { scope: 'col', tekst: 'Opmerking' }))),
         el('tbody', null, lijst.map(function (b) {
@@ -701,7 +698,6 @@
               return el('td', { class: k ? 'k-' + k : '', tekst: k ? kort[k] : '–' });
             }),
             el('td', { tekst: b.max == null ? 'maakt niet uit' : String(b.max) }),
-            el('td', { tekst: b.backup ? 'ja' : 'nee' }),
             el('td', { tekst: b.samenMet || '' }),
             el('td', { class: 'opmerking', tekst: b.opmerking || '' }));
         })));

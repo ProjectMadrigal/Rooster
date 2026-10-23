@@ -3,7 +3,7 @@
  *
  * Zo kan je de tool bekijken en uitproberen zonder Google-spreadsheet.
  * Alles staat in het geheugen van je browser: herlaad je de pagina, dan begin je opnieuw.
- * Codes in de demo: "demo" (vrijwilliger) en "demo-coordinator" (coördinator).
+ * Codes in de demo: "demo" (vrijwilliger) en "demo-planner" (planner).
  * Alle namen zijn verzonnen.
  */
 (function () {
@@ -68,7 +68,7 @@
     var volgende = maandPlus(1), deze = maandPlus(0);
     var vd = vrijdagen(volgende);
     if (vd[2]) db.avonden[vd[2]] = { datum: vd[2], status: 'workshop', event: 'Zinewerkplaats' };
-    var patroon = ['graag', 'kan', 'niet', 'graag', 'graag'];
+    var patroon = ['graag', 'backup', 'niet', 'graag', 'graag'];
     ['Alex', 'Bo', 'Charlie', 'Dani', 'Eli', 'Gus', 'Hanne'].forEach(function (n, i) {
       var keuzes = {};
       avondenVoorMaand(volgende).forEach(function (a, j) {
@@ -76,7 +76,7 @@
       });
       db.beschikbaarheden.push({
         maand: volgende, naam: n, keuzes: keuzes, max: i % 3 === 0 ? null : 1 + (i % 3),
-        backup: i % 2 === 0, samenMet: n === 'Alex' ? 'Bo' : '', opmerking: n === 'Eli' ? 'Liefst niet de eerste vrijdag.' : '', ingevuld: nu()
+        samenMet: n === 'Alex' ? 'Bo' : '', opmerking: n === 'Eli' ? 'Liefst niet de eerste vrijdag.' : '', ingevuld: nu()
       });
     });
     var namen = ['Alex', 'Bo', 'Charlie', 'Dani', 'Eli', 'Fien', 'Gus'];
@@ -90,7 +90,7 @@
 
   function rol(code) {
     code = String(code || '').trim().toLowerCase();
-    return code === 'demo-coordinator' ? 'coordinator' : code === 'demo' ? 'vrijwilliger' : null;
+    return code === 'demo-planner' ? 'coordinator' : code === 'demo' ? 'vrijwilliger' : null;
   }
   function actieveNamen() {
     return db.vrijwilligers.filter(function (v) { return v.actief === 'ja'; }).map(function (v) { return v.naam; }).sort();
@@ -122,7 +122,7 @@
         ok: true, rol: r, namen: actieveNamen(),
         teksten: {
           welkom: 'Fijn dat je meehelpt in de bib! Dit is een demo met verzonnen namen.',
-          uitleg: 'Kies je naam en de maand. Duid per avond aan of je graag komt, kan als het moet, of niet kan.',
+          uitleg: 'Kies je naam en de maand. Duid per avond aan of je graag komt, enkel back-up wil zijn, of niet kan.',
           privacy: 'Demo: er wordt niets bewaard. In de echte tool bewaren we enkel je voornaam en je keuzes, 12 maanden lang.'
         },
         instellingen: inst
@@ -155,7 +155,7 @@
       if (bestaand && !v.overschrijf) return { ok: false, bestaatAl: true };
       var rij = {
         maand: v.maand, naam: naam, keuzes: v.keuzes, max: v.max === 'maakt niet uit' ? null : +v.max,
-        backup: v.backup, samenMet: v.samenMet || '', opmerking: v.opmerking || '', ingevuld: nu()
+        samenMet: v.samenMet || '', opmerking: v.opmerking || '', ingevuld: nu()
       };
       if (bestaand) db.beschikbaarheden[db.beschikbaarheden.indexOf(bestaand)] = rij;
       else db.beschikbaarheden.push(rij);
@@ -233,7 +233,7 @@
     if (!r) return { ok: false, codeFout: true, fout: 'Deze code klopt niet. In de demo is de code "demo".' };
     var actie = acties[vraag.actie];
     var coord = ['coordMaand', 'bewaarAvonden', 'keurNaamGoed', 'weigerNaam', 'bewaarRooster', 'verwerkAfmelding'];
-    if (!actie || (coord.indexOf(vraag.actie) >= 0 && r !== 'coordinator')) return fout('Hiervoor heb je de code van de coördinator nodig.');
+    if (!actie || (coord.indexOf(vraag.actie) >= 0 && r !== 'coordinator')) return fout('Hiervoor heb je de code van de planner nodig.');
     // Kopie, zoals bij een echte server.
     return new Promise(function (ok) { setTimeout(function () { ok(kopie(actie(kopie(vraag), r))); }, 150); });
   };

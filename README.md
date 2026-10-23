@@ -23,14 +23,14 @@ Deze handleiding is geschreven voor vrijwilligers zonder technische kennis. Je h
 
 **Voor vrijwilligers** (met de toegangscode uit de WhatsApp-groep):
 
-- Je duidt per vrijdag aan of je **graag** komt, **kan als het moet**, of **niet** kan.
-- Je kiest hoeveel shiften je die maand wil doen, of je ook **back-up** wil zijn, en met wie je graag samen staat.
+- Je duidt per vrijdag aan of je **graag** komt, enkel **back-up** wil zijn, of **niet** kan. Een back-up springt in als iemand toch niet kan.
+- Je kiest hoeveel shiften je die maand wil doen, en met wie je graag samen staat.
 - Je ziet het rooster van deze en volgende maand, met de events van die avonden.
-- Kan je toch niet? Dan meld je je af met één knop. De coördinator ziet dat meteen.
+- Kan je toch niet? Dan meld je je af met één knop. De planner ziet dat meteen.
 
 Je hebt geen account nodig. Je browser onthoudt de code en je naam.
 
-**Voor de coördinator** (met de code van de coördinator):
+**Voor de planner** (met de code van de planner):
 
 - Je zet avonden op gesloten, workshop of iets anders, en vult events in.
 - Je keurt nieuwe namen goed.
@@ -45,7 +45,8 @@ Je hebt geen account nodig. Je browser onthoudt de code en je naam.
 - Enkel open avonden worden gepland.
 - Niemand komt boven zijn of haar maximum aantal shiften.
 - Eerst worden de vrijdagen gevuld waarop de minste mensen kunnen.
-- "Graag" gaat voor "kan als het moet".
+- Op een gewone plaats komt enkel wie "graag" koos. Wie "back-up" koos, komt enkel op de plaats van back-up.
+- Als back-up gaat wie "back-up" koos voor. Is er niemand, dan kiest de tool iemand die "graag" koos en die avond nog vrij is.
 - Duo's worden waar het kan samen ingepland.
 - Wie minder shiften heeft, krijgt voorrang.
 - De tool vermijdt dat iemand twee vrijdagen na elkaar staat.
@@ -53,7 +54,7 @@ Je hebt geen account nodig. Je browser onthoudt de code en je naam.
 
 **Hoe de tool in elkaar zit.** De website zelf staat op GitHub, in deze repository. De gegevens staan in een Google-spreadsheet in het Google-account van Madrigal. Een klein script bij die spreadsheet (Google Apps Script) zorgt voor de verbinding. Alles is gratis.
 
-> **Over de codes.** De toegangscode en de code van de coördinator zijn een eenvoudige drempel, geen echte beveiliging. Iemand die de code kent, kan het rooster zien en zich onder eender welke naam aanmelden. Daarom bewaart de tool enkel voornamen, en geen telefoonnummers of e-mailadressen. Komt de code buiten de groep terecht? Verander ze dan in het tabblad Instellingen (zie stap 7).
+> **Over de codes.** De toegangscode en de code van de planner zijn een eenvoudige drempel, geen echte beveiliging. Iemand die de code kent, kan het rooster zien en zich onder eender welke naam aanmelden. Daarom bewaart de tool enkel voornamen, en geen telefoonnummers of e-mailadressen. Komt de code buiten de groep terecht? Verander ze dan in het tabblad Instellingen (zie stap 7).
 
 ---
 
@@ -88,7 +89,7 @@ Ga terug naar de spreadsheet. Je ziet nu de tabbladen **Instellingen**, **Vrijwi
 
 Open het tabblad **Vrijwilligers** en vul per vrijwilliger een rij in:
 
-| voornaam | actief | ervaren / heeft sleutel | opmerking voor de coördinator |
+| voornaam | actief | ervaren / heeft sleutel | opmerking voor de planner |
 |---|---|---|---|
 | Sam | ja | ja | |
 | Lou | ja | nee | komt pas om 18:30 |
@@ -96,9 +97,9 @@ Open het tabblad **Vrijwilligers** en vul per vrijwilliger een rij in:
 - **voornaam**: precies zoals die overal getoond moet worden. Gebruik enkel voornamen. Hebben twee mensen dezelfde voornaam, voeg dan een letter toe, bijvoorbeeld "Sam D.".
 - **actief**: `ja` of `nee`. Wie op `nee` staat, verschijnt niet meer in de lijst, maar alles wat die persoon eerder deed, blijft bewaard.
 - **ervaren / heeft sleutel**: `ja` of `nee`. Vrijwilligers zien deze kolom nergens. De tool gebruikt ze enkel als je de regel uit stap 7 aanzet.
-- **opmerking**: enkel voor de coördinator.
+- **opmerking**: enkel voor de planner.
 
-Typt iemand in de tool een naam die nog niet in de lijst staat? Dan verschijnt die naam hier met **actief = nieuw**. Je keurt die goed in de tool (bij Coördinator → Nieuwe namen) of zet hier zelf `ja`.
+Typt iemand in de tool een naam die nog niet in de lijst staat? Dan verschijnt die naam hier met **actief = nieuw**. Je keurt die goed in de tool (bij Planner → Nieuwe namen) of zet hier zelf `ja`.
 
 Laat de volgorde van de kolommen staan. Voeg geen kolommen toe tussen de bestaande.
 
@@ -116,7 +117,7 @@ Open het tabblad **Avonden**. In kolom **F en G** staat een klein blok:
 
 Vul in kolom G de vaste events in. De tool vult ze automatisch in bij de juiste vrijdag. Heeft een maand 4 vrijdagen en staat er zowel bij "4de" als bij "laatste" iets? Dan wint "laatste".
 
-Uitzonderingen pas je aan in de tool, bij **Coördinator → Avonden**. Daar zet je ook een avond op **gesloten**, **workshop** of **ander**. Op die avonden kunnen vrijwilligers niets aanduiden.
+Uitzonderingen pas je aan in de tool, bij **Planner → Avonden**. Daar zet je ook een avond op **gesloten**, **workshop** of **ander**. Op die avonden kunnen vrijwilligers niets aanduiden.
 
 ---
 
@@ -169,7 +170,7 @@ Na elke wijziging in de repository werkt GitHub de site vanzelf bij, meestal bin
 1. **Werkt het script?** Open de URL van de web-app (uit stap 4) in je browser. Je moet *"De roosterserver werkt."* zien.
 2. **Werkt de site?** Open de link van GitHub Pages. Je ziet het welkomstscherm met een vak voor de code.
 3. **Als vrijwilliger**: vul de `toegangscode_vrijwilligers` in uit het tabblad Instellingen. Kies volgende maand, typ als naam **Test** (via "Ik sta er niet bij") en vul alles in. Kijk in de spreadsheet of er een rij bij staat in het tabblad Beschikbaarheid.
-4. **Als coördinator**: klik onderaan op **Andere code ingeven** en vul de `code_coordinator` in. Bij **Coördinator** zie je "Test" bij Nieuwe namen. Klik op **Weigeren**: de test wordt dan gewist.
+4. **Als planner**: klik onderaan op **Andere code ingeven** en vul de `code_planner` in. Bij **Planner** zie je "Test" bij Nieuwe namen. Klik op **Weigeren**: de test wordt dan gewist.
 5. Probeer ook eens **Maak voorstel** en **Bewaar als voorstel**. Vrijwilligers zien een voorstel pas als je publiceert.
 6. Probeer de site op je smartphone. Via het menu van je browser kan je ze **op je beginscherm zetten**.
 
@@ -194,9 +195,9 @@ Alle instellingen staan in het tabblad **Instellingen** van de spreadsheet. Pas 
 | `backup_telt_mee_voor_maximum` | nee | `ja`: back-up zijn telt mee als shift. |
 | `niet_twee_weken_na_elkaar` | ja | De tool vermijdt dat iemand twee weken na elkaar staat. Lukt het niet anders, dan gebeurt het toch, met een melding. |
 | `toegangscode_vrijwilligers` | (willekeurig) | De code voor de WhatsApp-groep. |
-| `code_coordinator` | (willekeurig) | De code voor de coördinator. Deel die niet. |
-| `inschrijving_sluit` | 7 | Zoveel dagen voor het begin van de maand sluit het invullen. De coördinator kan daarna nog wel invullen. |
-| `afmelding_backup_valt_automatisch_in` | nee | `ja`: bij een afmelding neemt de back-up meteen over. `nee`: de coördinator bevestigt. |
+| `code_planner` | (willekeurig) | De code voor de planner. Deel die niet. Heette vroeger `code_coordinator`: **Tabbladen installeren of herstellen** hernoemt die vanzelf, de code blijft dezelfde. |
+| `inschrijving_sluit` | 7 | Zoveel dagen voor het begin van de maand sluit het invullen. De planner kan daarna nog wel invullen. |
+| `afmelding_backup_valt_automatisch_in` | nee | `ja`: bij een afmelding neemt de back-up meteen over. `nee`: de planner bevestigt. |
 | `bewaartermijn_maanden` | 12 | Gegevens ouder dan zoveel maanden worden op de 1ste van elke maand gewist. `0` betekent: nooit wissen. De Kalender-tabbladen en de jaaroverzichten blijven altijd staan. Pas ook de termijn aan in `tekst_privacy` als je dit wijzigt. |
 | `minstens_een_ervaren_per_avond` | nee | Zie hieronder. |
 | `tekst_welkom` | | De welkomsttekst bovenaan. |
@@ -297,4 +298,4 @@ De tool heeft geen framework en geen build-stap. Wie een beetje HTML kent, kan d
 
 ### Privacy
 
-De tool bewaart enkel voornamen en roosterkeuzes: per vrijdag de keuze, het aantal shiften, back-up ja of nee, met wie je graag samen staat, een opmerking en het tijdstip van invullen. Er worden geen telefoonnummers of e-mailadressen bewaard. Gegevens ouder dan de bewaartermijn worden automatisch gewist, op de 1ste van elke maand. Wat blijft: de Kalender-tabbladen (wie wanneer stond) en de jaaroverzichten (per voornaam het aantal shiften en back-ups). Die verwijdert de coördinator zelf als dat nodig is, bijvoorbeeld als iemand vraagt om gewist te worden.
+De tool bewaart enkel voornamen en roosterkeuzes: per vrijdag de keuze, het aantal shiften, met wie je graag samen staat, een opmerking en het tijdstip van invullen. Er worden geen telefoonnummers of e-mailadressen bewaard. Gegevens ouder dan de bewaartermijn worden automatisch gewist, op de 1ste van elke maand. Wat blijft: de Kalender-tabbladen (wie wanneer stond) en de jaaroverzichten (per voornaam het aantal shiften en back-ups). Die verwijdert de planner zelf als dat nodig is, bijvoorbeeld als iemand vraagt om gewist te worden.

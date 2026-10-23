@@ -7,8 +7,10 @@
  *
  * Woordenlijst
  *   avond          { datum: 'JJJJ-MM-DD', status: 'open' | 'gesloten' | 'workshop' | 'ander', event: '' }
- *   beschikbaarheid { naam, keuzes: { 'JJJJ-MM-DD': 'graag' | 'kan' | 'niet' },
- *                    max: getal of null (null = standaard), backup: true/false, samenMet: '' of naam }
+ *   beschikbaarheid { naam, keuzes: { 'JJJJ-MM-DD': 'graag' | 'backup' | 'niet' },
+ *                    max: getal of null (null = standaard), samenMet: '' of naam }
+ *                  'graag' = wil die avond in de bib staan, 'backup' = enkel als back-up.
+ *                  Een oude keuze 'kan' (kan als het moet) telt als 'backup'.
  *   vrijwilliger   { naam, ervaren: true/false }   (enkel goedgekeurde, actieve vrijwilligers)
  *   instellingen   { aantalVrijwilligers, aantalBackups, standaardMax, backupTeltMee,
  *                    nietTweeWekenNaElkaar, minstensEenErvaren, backupVerplicht }
@@ -16,19 +18,28 @@
  * Harde grenzen (worden nooit overtreden):
  *   - enkel avonden met status "open" worden gepland;
  *   - niemand wordt ingepland op een avond waarvoor die "niet" koos of niets invulde;
+ *   - wie "back-up" koos, komt op die avond enkel op de plaats van back-up;
  *   - niemand komt boven zijn of haar maximum aantal shiften.
  * Al de rest zijn voorkeuren, in deze volgorde van belang (zie sorteerSleutel):
  *   1. minstens één ervaren vrijwilliger per avond (enkel als die instelling aan staat);
  *   2. niet twee weken na elkaar (enkel als die instelling aan staat);
- *   3. "graag" gaat voor "kan als het moet";
- *   4. duo's samen inplannen;
- *   5. wie minder shiften heeft, krijgt voorrang;
- *   6. bij een gelijke stand: alfabetisch, zodat het resultaat altijd hetzelfde is.
+ *   3. duo's samen inplannen;
+ *   4. wie minder shiften heeft, krijgt voorrang;
+ *   5. bij een gelijke stand: alfabetisch, zodat het resultaat altijd hetzelfde is.
+ * Back-ups: eerst wie "back-up" koos. Is er niemand, dan iemand die "graag" koos
+ * en die avond nog niet ingepland staat.
  */
 (function (globaal) {
   'use strict';
 
-  var KEUZE_LABEL = { graag: 'graag', kan: 'kan als het moet', niet: 'niet' };
+  var KEUZE_LABEL = { graag: 'graag', backup: 'back-up', niet: 'niet' };
+
+  // Oude keuzes ('kan' = kan als het moet) tellen als 'backup'.
+  function normaliseerKeuzes(keuzes) {
+    var uit = {};
+    Object.keys(keuzes || {}).forEach(function (d) { uit[d] = keuzes[d] === 'kan' ? 'backup' : keuzes[d]; });
+    return uit;
+  }
 
   // Zet de instellingen om naar vaste waarden, met de standaard uit de opdracht.
   function normaliseerInstellingen(i) {
@@ -80,9 +91,8 @@
       .map(function (b) {
         return {
           naam: b.naam,
-          keuzes: b.keuzes || {},
+          keuzes: normaliseerKeuzes(b.keuzes),
           max: typeof b.max === 'number' ? b.max : inst.standaardMax,
-          backup: !!b.backup,
           samenMet: b.samenMet && Object.prototype.hasOwnProperty.call(ervaren, b.samenMet) ? b.samenMet : ''
         };
       })
@@ -93,9 +103,15 @@
     return { inst: inst, ervaren: ervaren, mensen: mensen, perNaam: perNaam, avonden: avonden };
   }
 
+  // Kan op deze avond komen: als vrijwilliger ('graag') of als back-up ('backup').
   function isBeschikbaar(p, datum) {
     var k = p.keuzes[datum];
-    return k === 'graag' || k === 'kan';
+    return k === 'graag' || k === 'backup';
+  }
+
+  // Wil op deze avond een gewone shift doen.
+  function wilShift(p, datum) {
+    return p.keuzes[datum] === 'graag';
   }
 
   // Twee mensen vormen een duo als minstens één van beiden de ander koos.
@@ -127,7 +143,7 @@
       });
     }
     function aantalBeschikbaar(a) {
-      return ctx.mensen.filter(function (p) { return isBeschikbaar(p, a.datum); }).length;
+      return ctx.mensen.filter(function (p) { return wilShift(p, a.datum); }).length;
     }
 
     // Regel 3: eerst de avonden met de minste beschikbare mensen.
@@ -140,7 +156,7 @@
       var gekozen = rooster[a.datum].vrijwilligers;
       for (var plaats = 0; plaats < inst.aantalVrijwilligers; plaats++) {
         var kandidaten = ctx.mensen.filter(function (p) {
-          return isBeschikbaar(p, a.datum) && gekozen.indexOf(p.naam) < 0 && shiften(p.naam) < p.max;
+          return wilShift(p, a.datum) && gekozen.indexOf(p.naam) < 0 && shiften(p.naam) < p.max;
         });
         if (!kandidaten.length) break;
         var ervarenNodig = inst.minstensEenErvaren && plaats === inst.aantalVrijwilligers - 1 &&
@@ -152,7 +168,6 @@
           return [
             ervarenNodig && !ctx.ervaren[p.naam] ? 1 : 0,
             inst.nietTweeWekenNaElkaar && staatEenWeekErnaast(p.naam, a.datum) ? 1 : 0,
-            p.keuzes[a.datum] === 'graag' ? 0 : 1,
             duo ? 0 : 1,
             shiften(p.naam),
             p.naam
@@ -171,12 +186,12 @@
       var r = rooster[a.datum];
       for (var plaats = 0; plaats < inst.aantalBackups; plaats++) {
         var kandidaten = ctx.mensen.filter(function (p) {
-          return p.backup && isBeschikbaar(p, a.datum) && r.vrijwilligers.indexOf(p.naam) < 0 &&
+          return isBeschikbaar(p, a.datum) && r.vrijwilligers.indexOf(p.naam) < 0 &&
             r.backups.indexOf(p.naam) < 0 && (!inst.backupTeltMee || shiften(p.naam) < p.max);
         });
         if (!kandidaten.length) break;
         var sleutel = function (p) {
-          return [p.keuzes[a.datum] === 'graag' ? 0 : 1, backupTelling[p.naam] || 0, shiften(p.naam), p.naam];
+          return [p.keuzes[a.datum] === 'backup' ? 0 : 1, backupTelling[p.naam] || 0, shiften(p.naam), p.naam];
         };
         kandidaten.sort(function (x, y) { return vergelijkSleutels(sleutel(x), sleutel(y)); });
         r.backups.push(kandidaten[0].naam);
@@ -286,6 +301,8 @@
           m.push(n + ' vulde voor deze avond niets in.');
         } else if (p.keuzes[a.datum] === 'niet') {
           w.push(n + " koos 'niet' voor deze avond.");
+        } else if (p.keuzes[a.datum] === 'backup' && v.indexOf(n) >= 0) {
+          m.push(n + " koos enkel 'back-up' voor deze avond.");
         }
       });
       v.concat(inst.backupTeltMee ? b : []).forEach(function (n) {
@@ -293,10 +310,6 @@
         if (p && aantal[n] > p.max) {
           w.push(n + ' staat ' + aantal[n] + ' keer ingepland, maar wil maximum ' + p.max + '.');
         }
-      });
-      b.forEach(function (n) {
-        var p = ctx.perNaam[n];
-        if (p && !p.backup) m.push(n + ' gaf aan liever geen back-up te zijn.');
       });
       if (inst.nietTweeWekenNaElkaar) {
         v.forEach(function (n) {
@@ -331,13 +344,14 @@
     });
     var bezet = r.vrijwilligers.concat(r.backups);
     var kandidaten = ctx.mensen.filter(function (p) {
-      return isBeschikbaar(p, datum) && bezet.indexOf(p.naam) < 0 && (wasBackup ? p.backup : (aantal[p.naam] || 0) < p.max);
+      return isBeschikbaar(p, datum) && bezet.indexOf(p.naam) < 0 && (wasBackup || (aantal[p.naam] || 0) < p.max);
     });
     if (!kandidaten.length) return { naam: '', uitleg: 'Er is niemand anders beschikbaar die nog plaats heeft.' };
     kandidaten.sort(function (x, y) {
       return vergelijkSleutels(
-        [x.keuzes[datum] === 'graag' ? 0 : 1, aantal[x.naam] || 0, x.naam],
-        [y.keuzes[datum] === 'graag' ? 0 : 1, aantal[y.naam] || 0, y.naam]);
+        // Wie 'back-up' koos, bood aan om in te springen: die eerst.
+        [x.keuzes[datum] === 'backup' ? 0 : 1, aantal[x.naam] || 0, x.naam],
+        [y.keuzes[datum] === 'backup' ? 0 : 1, aantal[y.naam] || 0, y.naam]);
     });
     var k = kandidaten[0];
     return {

@@ -19,7 +19,7 @@
   function avonden() { return DATA.map(function (d) { return { datum: d, status: 'open', event: '' }; }); }
   function overal(keuze) { var k = {}; DATA.forEach(function (d) { k[d] = keuze; }); return k; }
   function persoon(naam, extra) {
-    var p = { naam: naam, keuzes: overal('graag'), max: 2, backup: false, samenMet: '' };
+    var p = { naam: naam, keuzes: overal('graag'), max: 2, samenMet: '' };
     for (var k in extra) p[k] = extra[k];
     return p;
   }
@@ -95,10 +95,21 @@
     verwacht(v.avonden[0].vrijwilligers.length === 2, 'de open avonden worden wel gepland');
   });
 
-  test('graag gaat voor kan als het moet', function () {
+  test('wie back-up koos, staat nooit op een gewone plaats', function () {
+    var mensen = [persoon('Alex', { keuzes: overal('backup'), max: 4 }), persoon('Bo', { max: 4 })];
+    var v = R.maakVoorstel(invoer(mensen, { nietTweeWekenNaElkaar: false }));
+    v.avonden.forEach(function (a) {
+      verwacht(a.vrijwilligers.indexOf('Alex') < 0, 'Alex staat als vrijwilliger op ' + a.datum);
+      verwacht(a.backups[0] === 'Alex', 'verwacht Alex als back-up op ' + a.datum);
+    });
+  });
+
+  test('een oude keuze kan als het moet telt als back-up', function () {
     var mensen = [persoon('Alex', { keuzes: overal('kan'), max: 4 }), persoon('Bo', { max: 4 }), persoon('Charlie', { max: 4 })];
-    var v = R.maakVoorstel(invoer(mensen, { aantalVrijwilligers: 1, nietTweeWekenNaElkaar: false }));
-    verwacht(v.avonden[0].vrijwilligers[0] !== 'Alex', 'Alex koos enkel kan als het moet');
+    var v = R.maakVoorstel(invoer(mensen, { nietTweeWekenNaElkaar: false }));
+    verwacht(v.avonden[0].vrijwilligers.indexOf('Alex') < 0, 'Alex staat als vrijwilliger');
+    verwacht(v.avonden[0].backups[0] === 'Alex', 'verwacht Alex als back-up');
+    verwacht(/back-up/.test(v.avonden[0].motivatie), 'de motivatie vermeldt de back-up niet');
   });
 
   test('ervaren-regel aan: elke avond minstens één ervaren vrijwilliger', function () {
@@ -125,13 +136,25 @@
     });
   });
 
-  test('back-up komt uit wie back-up wil zijn en staat niet al op die avond', function () {
-    var mensen = [persoon('Alex'), persoon('Bo'), persoon('Charlie'), persoon('Dani'), persoon('Kim', { backup: true, max: 0 })];
+  test('back-up: eerst wie back-up koos, en niet iemand die al op die avond staat', function () {
+    var mensen = [persoon('Alex'), persoon('Bo'), persoon('Charlie'), persoon('Dani'), persoon('Kim', { keuzes: overal('backup'), max: 0 })];
     var v = R.maakVoorstel(invoer(mensen));
     v.avonden.forEach(function (a) {
       verwacht(a.backups[0] === 'Kim', 'verwacht Kim als back-up op ' + a.datum);
       verwacht(a.vrijwilligers.indexOf('Kim') < 0, 'Kim staat ook als vrijwilliger');
     });
+  });
+
+  test('niemand koos back-up: een vrije graag-vrijwilliger wordt back-up', function () {
+    var mensen = [persoon('Alex', { max: 4 }), persoon('Bo', { max: 4 }), persoon('Charlie', { max: 4 })];
+    var a = R.maakVoorstel(invoer(mensen, { nietTweeWekenNaElkaar: false })).avonden[0];
+    verwacht(a.backups.length === 1 && a.vrijwilligers.indexOf(a.backups[0]) < 0, 'verwacht een vrije back-up');
+  });
+
+  test('back-up op een gewone plaats geeft een melding', function () {
+    var mensen = [persoon('Alex'), persoon('Kim', { keuzes: overal('backup') })];
+    var c = R.controleerRooster({ '2026-11-06': { vrijwilligers: ['Alex', 'Kim'], backups: [] } }, invoer(mensen));
+    verwacht(c['2026-11-06'].meldingen.some(function (m) { return /Kim koos enkel 'back-up'/.test(m); }), 'verwacht een melding');
   });
 
   test('lege back-up geeft enkel een melding, tenzij verplicht', function () {
@@ -144,7 +167,7 @@
 
   test('zelfde invoer geeft altijd hetzelfde voorstel', function () {
     var mensen = ['Alex', 'Bo', 'Charlie', 'Dani', 'Eli'].map(function (n, i) {
-      return persoon(n, { max: 1 + (i % 3), backup: i % 2 === 0, keuzes: { '2026-11-06': 'graag', '2026-11-13': i % 2 ? 'kan' : 'niet', '2026-11-20': 'kan', '2026-11-27': 'graag' } });
+      return persoon(n, { max: 1 + (i % 3), keuzes: { '2026-11-06': 'graag', '2026-11-13': i % 2 ? 'backup' : 'niet', '2026-11-20': 'backup', '2026-11-27': 'graag' } });
     });
     var a = JSON.stringify(R.maakVoorstel(invoer(mensen)));
     var b = JSON.stringify(R.maakVoorstel(invoer(mensen.slice().reverse())));
@@ -152,7 +175,7 @@
   });
 
   test('vervanging bij afmelding: eerst de back-up', function () {
-    var mensen = [persoon('Alex'), persoon('Bo'), persoon('Kim', { backup: true })];
+    var mensen = [persoon('Alex'), persoon('Bo'), persoon('Kim', { keuzes: overal('backup') })];
     var rooster = { '2026-11-06': { vrijwilligers: ['Alex', 'Bo'], backups: ['Kim'] } };
     var v = R.stelVervangingVoor('2026-11-06', 'Alex', rooster, invoer(mensen));
     verwacht(v.naam === 'Kim', 'verwacht Kim, kreeg ' + v.naam);
