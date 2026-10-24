@@ -336,8 +336,6 @@ Wijzigingen aan de tool zelf (`index.html`, `app.js`, `styles.css`, `roosterrege
 
 Kleuren en lettertypes staan als variabelen bovenaan [`styles.css`](styles.css).
 
-**Met hulp van Claude.** In deze repository staat [`CLAUDE.md`](CLAUDE.md): een samenvatting die Claude bij een nieuwe sessie automatisch leest. Begin per opdracht een nieuwe sessie en beschrijf alles wat je wil in één bericht.
-
 **Voor wie de regels aanpast.** Open `tests/index.html` in je browser, of voer `node tests/roosterregels.test.js` uit als je [Node.js](https://nodejs.org) hebt. Alle tests moeten slagen. Probeer daarna de demo.
 
 Belangrijk: verwijder of verschuif nooit een kolom in de spreadsheet. De tool leest de kolommen op hun plaats.
@@ -358,5 +356,4 @@ Belangrijk: verwijder of verschuif nooit een kolom in de spreadsheet. De tool le
 | Beginscherm-instellingen | [`manifest.json`](manifest.json) |
 | Tests en demo | [`tests/`](tests/) |
 | De oorspronkelijke opdracht | [`docs/OPDRACHT.md`](docs/OPDRACHT.md), met de latere wijzigingen bovenaan |
-| Samenvatting voor Claude | [`CLAUDE.md`](CLAUDE.md) |
 | De koppeling met de catalogus | `apps-script/Rooster.js` in de repository **projectmadrigal.github.io**. Die gebruikt de actie `maand` en de toegangscode. |
