@@ -150,7 +150,7 @@ Werkt het nog altijd niet? Zet de vrijwilligers tijdelijk terug op de WhatsApp-p
 
 ## B1. Hoe het voorstel gemaakt wordt
 
-De tool gebruikt vaste regels, geen AI. Dezelfde keuzes geven altijd hetzelfde voorstel. De regels staan in [`roosterregels.js`](roosterregels.js), met uitleg.
+De tool gebruikt vaste regels: dezelfde keuzes geven altijd hetzelfde voorstel. De regels staan in [`roosterregels.js`](roosterregels.js), met uitleg.
 
 **Nooit:**
 
