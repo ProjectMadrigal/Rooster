@@ -56,6 +56,11 @@ jobs:
           # Eerst ophalen: zo blijft het manifest (tijdzone, web-app) zoals het is.
           clasp pull
           test -f appsscript.json
+          # Vangnet: is dit wel het rooster-script? Anders zou een verkeerde SCRIPT_ID een ander script overschrijven.
+          if ! grep -lq "Rooster Project Madrigal" ./*.js ./*.gs 2>/dev/null; then
+            echo "::error::De SCRIPT_ID hoort niet bij het rooster-script (de code in Apps Script is geen rooster). Kijk het geheim SCRIPT_ID na. Er is niets aangepast."
+            exit 1
+          fi
           # Alle code vervangen door het ene bestand uit deze repository.
           find . -maxdepth 1 -type f \( -name '*.js' -o -name '*.gs' \) -delete
           cp ../apps-script/Code.gs ./Code.js
