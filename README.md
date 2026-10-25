@@ -315,7 +315,16 @@ Het jaaroverzicht wordt bijgewerkt in januari, vóór oude gegevens gewist worde
 
 ## D3. Een nieuwe versie van het script publiceren
 
-Verandert er iets in [`apps-script/Code.gs`](apps-script/Code.gs), dan moet je dat in Google opnieuw publiceren. Anders blijft de oude versie werken.
+**Automatisch.** Verandert er iets in [`apps-script/Code.gs`](apps-script/Code.gs), dan zet GitHub het zelf in Apps Script en publiceert het een nieuwe versie van dezelfde web-app (`.github/workflows/apps-script.yml`). De URL blijft dezelfde. Je ziet het verloop bij **Actions > Apps Script bijwerken**. Na een grote wijziging kies je nog **Rooster > Tabbladen installeren of herstellen** in de spreadsheet, zodat nieuwe instellingen erbij komen.
+
+**Eenmalig instellen.** Dezelfde koppeling bestaat al voor de catalogus. Je hebt twee geheimen nodig in deze repository (**Settings > Secrets and variables > Actions > New repository secret**):
+
+1. `CLASPRC_JSON`: dezelfde inhoud als het geheim met die naam in de repository van de catalogus. GitHub toont een geheim nooit opnieuw. Open daarom de Google Cloud Shell, typ `cat ~/.clasprc.json` en kopieer alles. Is dat bestand weg, volg dan de aanmeldstappen in de README van de catalogus (D1) opnieuw.
+2. `SCRIPT_ID`: open het rooster-script in Apps Script, ga naar **Projectinstellingen** (tandwiel) en kopieer de **Script-ID**.
+
+Kies daarna **Actions > Apps Script bijwerken > Run workflow**. Een groen vinkje betekent dat het werkt.
+
+**Met de hand, als het automatisch niet lukt:**
 
 1. Open `apps-script/Code.gs` op GitHub, klik op **Copy raw file** en plak alles in de Apps Script-editor, in plaats van de oude code. Klik op **Project opslaan**.
 2. Kies in de spreadsheet **Rooster > Tabbladen installeren of herstellen**. Zo komen nieuwe instellingen erbij. Wat er al staat, blijft.
